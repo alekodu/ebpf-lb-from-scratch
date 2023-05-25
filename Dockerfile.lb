@@ -1,4 +1,4 @@
 FROM ubuntu:jammy
 RUN apt-get update
 RUN apt-get install -y clang llvm libelf-dev libpcap-dev build-essential make 
-RUN apt-get install -y linux-tools-common
+RUN apt-get install -y linux-tools-common linux-tools-generic linux-cloud-tools-generic linux-tools-5.15.0-72-generic linux-cloud-tools-5.15.0-72-generic
