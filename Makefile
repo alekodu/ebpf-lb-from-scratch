@@ -1,25 +1,16 @@
-# TARGET = xdp_lb
-# TARGET = packetdrop
-TARGET = xdp_liz
+TARGET = xdp_lb
+XDP_MODE = xdpgeneric # xdpdrv, xdpoffload
+DEV = eth0 # enp130s0np0, bond0
 
-# For xdp_liz, make and also make user. The others don't have userspace programs
-
-USER_TARGET = ${TARGET:=_user}
 BPF_TARGET = ${TARGET:=_kern}
 BPF_C = ${BPF_TARGET:=.c}
 BPF_OBJ = ${BPF_C:.c=.o}
 
 xdp: $(BPF_OBJ)
-	bpftool net detach xdpgeneric dev eth0
+	bpftool net detach $(XDP_MODE) dev $(DEV)
 	rm -f /sys/fs/bpf/$(TARGET)
 	bpftool prog load $(BPF_OBJ) /sys/fs/bpf/$(TARGET)
-	bpftool net attach xdpgeneric pinned /sys/fs/bpf/$(TARGET) dev eth0 
-
-user: $(USER_TARGET)
-
-$(USER_TARGET): %: %.c  
-	gcc -Wall $(CFLAGS) -Ilibbpf/src -Ilibbpf/src/include/uapi -Llibbpf/src -o $@  \
-	 $< -l:libbpf.a -lelf -lz
+	bpftool net attach $(XDP_MODE) pinned /sys/fs/bpf/$(TARGET) dev $(DEV)
 
 $(BPF_OBJ): %.o: %.c
 	clang -S \
@@ -35,11 +26,7 @@ $(BPF_OBJ): %.o: %.c
 	llc -march=bpf -filetype=obj -o $@ ${@:.o=.ll}
 
 clean:
-	bpftool net detach xdpgeneric dev eth0
+	bpftool net detach $(XDP_MODE) dev $(DEV)
 	rm -f /sys/fs/bpf/$(TARGET)
 	rm $(BPF_OBJ)
 	rm ${BPF_OBJ:.o=.ll}
-
-
-
-
